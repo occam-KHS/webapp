@@ -318,12 +318,7 @@ day = datetime.datetime.now().day
 date_format = '%Y%m%d'
 today = datetime.datetime.now().strftime(date_format)
 
-print(today)
-parent_folder = 'D:\investor_following'
-sub_folder = str(today)
-folder_path  = os.path.join(parent_folder, sub_folder)
-os.makedirs(folder_path, exist_ok=True)
-# Load data
+
 
 st.title("기관/외국인 추종 매수 전략")
 
@@ -356,26 +351,44 @@ def process_data(today, money):
             print(err)
             pass        
         
-    data_all.to_pickle(folder_path + '\\' + money + 'data_all.pkl')   
+    data_all.to_csv(folder_path + '\\' + money + 'data_all.txt')   
     org_30 = data_all.loc[today][['code', 'name', 'prsn_ntby_tr_pbmn', 'frgn_ntby_tr_pbmn', 'orgn_ntby_tr_pbmn']].sort_values(by=money, ascending=False).head(30)
-    org_30.to_pickle(folder_path + '\\' + money + 'org_30.pkl')
+    org_30.to_csv(folder_path + '\\' + money + 'org_30.txt')
     return data_all, org_30
     
 
 # Input for date
-st.write("오후 4시 이후 서비스 가능합니다")
+st.write("프로그램 실행 가는 시간: 16.30 - 23:59")
 options = ['기관', '외국인']
 select_investor = st.selectbox('기관/외국인 추종 선택', options)
 
 if select_investor == '기관':
     money = 'orgn_ntby_tr_pbmn'
+    div = 'institution'
     stats = 'orgn_tval'
 else:
     money = 'frgn_ntby_tr_pbmn'
+    div = 'foreign'
     stats = 'frgn_tval'
-        
+    
+    
+print(today)
+parent_folder = 'D:\investor_following'
+day_folder = str(today)
+day_path  = os.path.join(parent_folder, day_folder)
+os.makedirs(day_path, exist_ok=True)
 
-if st.button("출력 - 실행 시간 1분"):    
+div_folder = str(div)
+folder_path  = os.path.join(day_path, div_folder)
+os.makedirs(folder_path, exist_ok=True)
+
+# Load data    
+        
+# 프로그램 사용 가능 시간
+start_time  = (datetime.datetime.now() > datetime.datetime(year=year, month=month, day=day, hour=16, minute=30, second=1))
+end_time  = (datetime.datetime.now() < datetime.datetime(year=year, month=month, day=day, hour=23, minute=59, second=1))
+        
+if st.button("출력 - 실행 시간 1분") and start_time and end_time:    
 
     date_format = '%Y%m%d'
     today = datetime.datetime.now().strftime(date_format)
@@ -417,7 +430,7 @@ if st.button("출력 - 실행 시간 1분"):
         st.write(select_investor + " 순매수와 주가 변동율과의 관계가 높은 종목")
         selection = outcome[outcome['adf_pval']<0.01].sort_values(by=stats, ascending=False).round(5)
         st.dataframe(selection)
-        selection.to_pickle(folder_path + '\\' + money + 'selection.pkl')
+        selection.to_csv(folder_path + '\\' + money + 'selection.txt')
         st.write('누적순매수 차트')
         # Plot results
         for code in selection['code']:
